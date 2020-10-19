@@ -1,14 +1,3 @@
-"------------------------------------------------------------------------------
-"
-"   File: .vimrc 
-"   Author: Christopher Smith
-"   Date: 12 August 2017
-"
-"   Description: This vimrc is a custom file for vim settings used on most of
-"   my machines. It does not assume any plugins are downloaded and installed.
-"   Note: Current Iteration includes a VIM file that could easily be placed in
-"   this file that helps with tmux pane navigation ( Seamless navigation ctrl - {hjkl}).
-"------------------------------------------------------------------------------
 
 "if exists('$WINDOWID') && ($TERM =~ "st" || $TERM =~ "tmux" || $TERM =~"screen-256color" || $TERM =~ "xterm-256color")
 "    colorscheme miromiro
@@ -17,8 +6,13 @@
 "endif
 "
 if &compatible
-	set nocompatible
+    set nocompatible
 endif
+
+
+" To make block cursor despite zsh
+" autocmd VimEnter * silent exec "! echo -ne '\e[1 q'"
+" autocmd VimLeave * silent exec "! echo -ne '\e[5 q'"
 
 
 "------------------------------------------------------------------------------
@@ -60,9 +54,8 @@ set grepprg=grep\ -nH\ $*
 filetype plugin indent on "Load filetype specific indent files
 
 set tabstop=4	"Number of Visual Spaces per Tab
-
 set softtabstop=4 "Number of Spaces in Tab when editing
-
+set shiftwidth=4
 set expandtab "Tabs are Spaces
 
 "------------------------------------------------------------------------------
@@ -73,8 +66,7 @@ set expandtab "Tabs are Spaces
 "
 "------------------------------------------------------------------------------
 
-set relativenumber "show line numbers
-set number
+set relativenumber number "show line numbers
 
 set showcmd "show command in bottom bar
 
@@ -158,16 +150,23 @@ nnoremap <C-H> <C-W><C-H>
 set splitbelow
 set splitright
 
-
-
 "
 "	Disable Arrow Key Movement, Resizes Splits Instead
 "
-"nnoremap <Up>    :resize +2<CR>
-"nnoremap <Down>  :resize -2<CR>
-"nnoremap <Left>  :vertical resize +2<CR>
-"nnoremap <Right> :vertical resize -2<CR>
+nnoremap <Up>    :resize +2<CR>
+nnoremap <Down>  :resize -2<CR>
+nnoremap <Left>  :vertical resize +2<CR>
+nnoremap <Right> :vertical resize -2<CR>
 
+" FILE BROWSING: 
+"
+" Tweaks for browsing
+let g:netrw_banner=0        " disable anoying banner
+let g:netrw_browse_split=4  " open in prior window
+let g:netrw_altv=1          " open splits to the right`
+let g:netrw_liststyle=3     " tree view
+let g:netrw_list_hide=netrw_gitignore#Hide()
+let g:netrw_list_hide.=',\(^\|\s\s\)\zs\.\S\+'
 
 "------------------------------------------------------------------------------
 "
@@ -183,14 +182,10 @@ let mapleader="," "Leader is comma
 "jk is escape
 "inoremap jk <esc>
 
-" toggle gundo
-nnoremap <leader>u :GundoToggle<CR>
-
 
 set statusline=\ \%f%m%r%h%w\ ::\ %y\ [%{&ff}]\%=\ [%p%%:\ %l/%L]\ 
 set laststatus=2
 set cmdheight=1
-
 
 
 " {{{ DistractFree
@@ -201,9 +196,9 @@ let g:distractfree_keep_options = 'textwidth=79'
 
 " {{{ Map keys to toggle functions
 function! MapToggle(key, opt)
-        let cmd = ':set '.a:opt.'! \| set '.a:opt."?\<CR>"
-        exec 'nnoremap '.a:key.' '.cmd
-        exec 'inoremap '.a:key." \<C-O>".cmd
+    let cmd = ':set '.a:opt.'! \| set '.a:opt."?\<CR>"
+    exec 'nnoremap '.a:key.' '.cmd
+    exec 'inoremap '.a:key." \<C-O>".cmd
 endfunction
 
 command! -nargs=+ MapToggle call MapToggle(<f-args>)
@@ -217,18 +212,17 @@ MapToggle <F8> wrap
 
 " {{{ Toggle colored right border after 80 Characters
 set colorcolumn=0
-let s:color_column_old = 80
 
 function! ToggleColorColumn()
-        if s:color_column_old == 0
-                let s:color_column_old = &colorcolumn
-                windo let &colorcolumn = 0
-        else
-                windo let &colorcolumn=s:color_column_old
-                let s:color_column_old = 0
-        endif
+    if s:color_column_old == 0
+        let s:color_column_old = &colorcolumn
+        windo let &colorcolumn = 0
+    else
+        windo let &colorcolumn=s:color_column_old
+        let s:color_column_old = 0
+    endif
 endfunction
-nnoremap <bar> :call <SID>ToggleCOlorColumn()<cr>
+nnoremap <bar> :call ToggleColorColumn()<CR>
 " }}}
 
 au BufNewFile,BufRead *rtorrent.rc* set filetype=rtorrent
@@ -245,7 +239,7 @@ let g:tex_flavor='latex'
 set iskeyword+=:
 
 if exists('$TMUX')
-        execute 'source' '~/.vim/vim_configs/tmux_nav.vim'
+    execute 'source' '~/.vim/vim_configs/tmux_nav.vim'
 endif
 au BufNewFile,BufRead *.s,*.S set filetype=arm " arm = armv6/7
 
@@ -270,7 +264,7 @@ call vundle#begin()
 Plugin 'VundleVim/Vundle.vim'
 
 " Snippits Plugin
-Plugin 'SirVer/ultisnips'
+" Plugin 'SirVer/ultisnips'
 Plugin 'honza/vim-snippets'
 Plugin 'KeitaNakamura/tex-conceal.vim'
 
@@ -281,10 +275,6 @@ let g:UltiSnipsJumpBackwardTrigger="<c-z>"
 
 " A Vim Plugin for Lively Previewing LaTeX PDF Output
 Plugin 'lervag/vimtex'
-
-" Mapping for inkscape-figures
-"inoremap <C-f> <Esc>: silent exec '.!inkscape-figures create "'.getline('.').'" "'.b:vimtex.root.'/figures/"'<CR><CR>:w<CR>
-"nnoremap <C-f> : silent exec '!inkscape-figures edit "'.b:vimtex.root.'/figures/" > /dev/null 2>&1 &'<CR><CR>:redraw!<CR>
 
 call vundle#end()            " required
 filetype plugin indent on    " required
@@ -303,6 +293,59 @@ inoremap <C-f> <Esc>: silent exec '.!inkscape-figures create "'.getline('.').'" 
 nnoremap <C-f> : silent exec '!inkscape-figures watch 1>/dev/null; inkscape-figures edit "'.b:vimtex.root.'/figures/" > /dev/null 2>&1 &'<CR><CR>:redraw!<CR>
 
 " Spell checking
-setlocal spell
-set spelllang=en_us
+map <leader>o :setlocal spell! spelllang=en_us<CR>
 inoremap <C-l> <c-g>u<Esc>[s1z=`]a<c-g>u
+
+
+function! CleverTab()
+    let line = getline('.')                         " current line
+    let pumvis = pumvisible()
+    let substr = strpart(line, -1, col('.')+1)      " from the start of the current
+    " line to one character right
+    " of the cursor
+    let substr = matchstr(substr, "[^ \t]*$")       " word till cursor
+    if (strlen(substr)==0)                          " nothing to match on empty string
+        return "\<tab>"
+    endif
+    let has_period = match(substr, '\.') != -1      " position of period, if any
+    let has_slash = match(substr, '\/') != -1       " position of slash, if any
+    let has_brace = stridx(substr, "{") != -1
+    if (pumvis)
+        return "\<C-N>"
+    endif
+    if ( has_brace )
+        return "\<CR>\<CR>}\<Esc>ki\<tab>"
+    if (!has_period && !has_slash)
+        return "\<C-X>\<C-N>"                         " existing text matching // maybe just change to <C-O> ?
+    elseif ( has_slash )
+        return "\<C-X>\<C-F>"                         " file matching
+    else
+        return "\<C-X>\<C-O>"                         " plugin matching
+    endif
+endfunction                                                                                                                                                                                                
+" inoremap <Tab> <C-R>=CleverTab()<CR>
+inoremap <expr> <Tab> CleverTab()
+
+if expand('%:e') ==? 'cpp'
+    if getfsize(expand(@%)) == '-1' || getfsize(expand(@%)) == '0'
+        let file = expand('%')
+        let file = substitute(file, 'cpp', 'h', '')
+        silent 0 put =file
+        silent normal I#include "
+        silent normal A"
+    endif
+endif
+
+if expand('%:e') ==? 'h'
+    if getfsize(expand(@%)) == '-1' || getfsize(expand(@%)) == '0'
+        " silent normal iHello
+        let file = toupper(expand('%'))
+        let file = substitute(file, '\.', "_", "")
+        silent 0 put =file
+        silent normal I#ifndef 
+        silent normal yyp
+        silent normal lcwdefine
+        silent normal jyy3pGi#endif
+        silent normal kk
+    endif
+endif
