@@ -1,0 +1,154 @@
+global !p
+texMathZones = ['texMathZone'+x for x in ['A', 'AS', 'B', 'BS', 'C', 'CS', 'D', 'DS', 'E', 'ES', 'F', 'FS', 'G', 'GS', 'H', 'HS', 'I', 'IS', 'J', 'JS', 'K', 'KS', 'L', 'LS', 'DS', 'V', 'W', 'X', 'Y', 'Z']]
+texIgnoreMathZones = ['texMathText']
+texMathZoneIds = vim.eval('map('+str(texMathZones)+", 'hlID(v:val)')")
+texIgnoreMathZoneIds = vim.eval('map('+str(texIgnoreMathZones)+", 'hlID(v:val)')")
+ignore = texIgnoreMathZoneIds[0]
+def math():
+	synstackids = vim.eval("synstack(line('.'), col('.') - (col('.')>=2 ? 1 : 0))")
+	try:
+		first = next(i for i in reversed(synstackids) if i in texIgnoreMathZoneIds or i in texMathZoneIds)
+		return first != ignore
+	except StopIteration:
+		return False
+endglobal
+
+snippet m "math block"
+\[$1\]
+endsnippet
+
+snippet { "Auto scope"
+{
+    $1
+}
+endsnippet
+
+snippet for "Auto for loop"
+for( $1 ; $2; $3)
+{
+    $4
+}
+endsnippet
+
+snippet if "Auto if statement"
+if( $1 )
+{
+    $2
+}
+endsnippet
+
+snippet today "Date"
+`date +%F`
+endsnippet
+
+priority 1
+snippet // "frac"
+\\frac{$1}{$2}$0
+endsnippet 
+
+snippet pi "autopi"
+\pi
+endsnippet
+
+context "math()"
+priority 100
+snippet 'bb-(.)' "insert set letter" rA
+`!p
+snip.rv = "\mathbb{" + match.group(1).upper() + "}"
+`
+endsnippet
+
+snippet '(.)prime(.)' "auto prime" rA
+`!p
+snip.rv = match.group(1) +" ^\prime(" + match.group(2) + ")"
+`
+endsnippet
+
+priority 10
+snippet '(\S+)//(\S+)' "fraction" ri
+`!p
+snip.rv = "\\frac{" + match.group(1) + "}{" + match.group(2) + "}" 
+`
+endsnippet
+
+snippet 'del(.)del(.)' "partial fraction" rA
+`!p
+snip.rv = "\\frac{\partial " + match.group(1) + "}{\partial " + match.group(2) + "}"
+`
+endsnippet
+
+snippet mk "Math" wA
+$ ${1} $`!p
+if t[2] and t[2][0] not in [',', '.', '?', '-', ' ']:
+    snip.rv = ' '
+else:
+    snip.rv = ''
+`$2
+endsnippet
+
+priority 69
+snippet "([0a-zA-Z])hat" "hat" ri
+`!p
+if match.group(1) != 't' and match.group(1) != 'w':
+	snip.rv = "\hat{" + match.group(1)+ "}"
+else:
+	snip.rv = match.group(1) + "hat"	
+`
+endsnippet
+
+snippet ** "dot" iA
+\cdot
+endsnippet
+
+snippet "(.)ut" "undertilde" ri
+\vec{`!p snip.rv=match.group(1)`}
+endsnippet
+
+snippet abs "auto-scope" i
+\abs{ $1 } $2
+endsnippet
+
+snippet endl "new line"
+\\\\[4pt]
+endsnippet
+
+snippet "var (\S+) = (\S+)" "LaTeX Variable" ri
+`!p
+snip.rv = "\\newcommand\\" + match.group(1) + "{" + match.group(2) + "}"
+`
+endsnippet
+
+
+snippet "cross (\S+) (\S+)" "Make cross product matrix" ri
+`!p 
+vec1 = match.group(1) 
+vec2 = match.group(2)
+a = vec1[1:-1].split(',')
+b = vec2[1:-1].split(',')
+v = (int(a[1]) * int(b[2])) - (int(a[2]) * int(b[1]))
+n = (int(a[2]) * int(b[0])) - (int(a[0]) * int(b[2]))
+m = (int(a[0]) * int(b[1])) - (int(a[1]) * int(b[0]))
+
+snip.rv =   """\\begin{equation*}
+\\begin{split}
+\\begin{vmatrix}
+    \hat{i} & \hat{j} & \hat{k} \\\\""" + f"""
+    {a[0]} & {a[1]} & {a[2]} \\\\
+    {b[0]} & {b[1]} & {b[2]}
+\\end{{vmatrix}}""" + f""" &=
+    ( \\hat{{i}} \\cdot {a[1]} \\cdot {b[2]} ) + ( \\hat{{j}} \\cdot {a[2]} \\cdot {b[0]} ) + ( \\hat{{k}} \\cdot {a[0]} \\cdot {b[1]} )
+    - ( {b[0]} \\cdot {a[1]} \\cdot \\hat{{k}} ) - ( {b[1]} \\cdot {a[2]} \\cdot \\hat{{i}} ) - ( {b[2]} \\cdot {a[0]} \\cdot \\hat{{j}} )
+\\\\
+&= ({v} \\cdot \\hat{{i}}) + ({n} \\cdot \\hat{{j}} ) + ( {m} \\cdot \\hat{{k}} ) \\\\
+&= <{v},{n},{m}>
+\\end{{split}}
+\\end{{equation*}}
+"""
+
+
+
+`
+endsnippet
+
+
+

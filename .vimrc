@@ -1,4 +1,3 @@
-
 "if exists('$WINDOWID') && ($TERM =~ "st" || $TERM =~ "tmux" || $TERM =~"screen-256color" || $TERM =~ "xterm-256color")
 "    colorscheme miromiro
 "else
@@ -7,13 +6,10 @@
 "
 if &compatible
     set nocompatible
-endif
-
-
-" To make block cursor despite zsh
-" autocmd VimEnter * silent exec "! echo -ne '\e[1 q'"
-" autocmd VimLeave * silent exec "! echo -ne '\e[5 q'"
-
+endif 
+" For snippet-style shortcuts, make jumping around easier
+" Even though it is control + @, it is actually ctrl + space
+inoremap <C-@> <Esc>/<++><CR>c4l
 
 "------------------------------------------------------------------------------
 "
@@ -24,6 +20,7 @@ endif
 "------------------------------------------------------------------------------
 
 syntax on "Enable Syntax Processing
+:hi gray guifg=#ebdbb2 ctermfg=223
 
 filetype plugin on
 
@@ -34,6 +31,8 @@ set nowrap
 set encoding=utf-8
 set backspace=2
 set scrolloff=10
+
+set scrolloff=8
 
 " Allows for writing to files with root priviledges
 cmap w!! w !sudo tee %
@@ -57,6 +56,7 @@ set tabstop=4	"Number of Visual Spaces per Tab
 set softtabstop=4 "Number of Spaces in Tab when editing
 set shiftwidth=4
 set expandtab "Tabs are Spaces
+set smartindent " New line generates proper tabbing
 
 "------------------------------------------------------------------------------
 "
@@ -144,6 +144,17 @@ nnoremap gV `[v`]
 nnoremap <C-J> <C-W><C-J>
 nnoremap <C-K> <C-W><C-K>
 nnoremap <C-L> <C-W><C-L>
+tnoremap <C-J> <C-W><C-J>
+tnoremap <C-K> <C-W><C-K>
+tnoremap <C-L> <C-W><C-L>
+tnoremap <C-H> <C-W><C-H>
+
+" Make splits slightly quicker
+" nnoremap <C-V> <C-W><C-V>
+" Can't do ctrl-s because that is terminal scroll lock
+" nnoremap <C-S> <C-W><C-S>
+
+nnoremap <C-T> :vert term<CR>
 nnoremap <C-H> <C-W><C-H>
 
 "Split panes to the left and below the current vim pane
@@ -212,6 +223,7 @@ MapToggle <F8> wrap
 
 " {{{ Toggle colored right border after 80 Characters
 set colorcolumn=0
+let s:color_column_old = 80
 
 function! ToggleColorColumn()
     if s:color_column_old == 0
@@ -267,11 +279,13 @@ Plugin 'VundleVim/Vundle.vim'
 " Plugin 'SirVer/ultisnips'
 Plugin 'honza/vim-snippets'
 Plugin 'KeitaNakamura/tex-conceal.vim'
+Plugin 'vimwiki/vimwiki'
+Plugin 'morhetz/gruvbox'
 
 " Snippits Settings
-let g:UltiSnipsExpandTrigger="<tab>"
-let g:UltiSnipsJumpForwardTrigger="<tab>"
-let g:UltiSnipsJumpBackwardTrigger="<c-z>"
+" let g:UltiSnipsExpandTrigger="<tab>"
+" let g:UltiSnipsJumpForwardTrigger="<tab>"
+" let g:UltiSnipsJumpBackwardTrigger="<c-z>"
 
 " A Vim Plugin for Lively Previewing LaTeX PDF Output
 Plugin 'lervag/vimtex'
@@ -296,6 +310,10 @@ nnoremap <C-f> : silent exec '!inkscape-figures watch 1>/dev/null; inkscape-figu
 map <leader>o :setlocal spell! spelllang=en_us<CR>
 inoremap <C-l> <c-g>u<Esc>[s1z=`]a<c-g>u
 
+let wiki = {}
+let wiki.nested_syntaxes = {'python': 'python', 'c++': 'cpp'}
+let g:vimwiki_list = [wiki]
+
 
 function! CleverTab()
     let line = getline('.')                         " current line
@@ -310,42 +328,35 @@ function! CleverTab()
     let has_period = match(substr, '\.') != -1      " position of period, if any
     let has_slash = match(substr, '\/') != -1       " position of slash, if any
     let has_brace = stridx(substr, "{") != -1
+    let has_loop = match(substr, 'for') != -1 || match(substr, 'while') != -1
+
     if (pumvis)
         return "\<C-N>"
     endif
+    if ( has_loop )
+        return " (  )\<CR>{\<CR>}\<Esc>ko<++>\<Esc>j.4kf(lli"
+    endif
     if ( has_brace )
-        return "\<CR>\<CR>}\<Esc>ki\<tab>"
+        return "\<CR>}\<Esc>ko"
+    endif
     if (!has_period && !has_slash)
         return "\<C-X>\<C-N>"                         " existing text matching // maybe just change to <C-O> ?
     elseif ( has_slash )
         return "\<C-X>\<C-F>"                         " file matching
     else
-        return "\<C-X>\<C-O>"                         " plugin matching
+        return "\<C-X>\<C-O>"                         " omni matching
     endif
 endfunction                                                                                                                                                                                                
-" inoremap <Tab> <C-R>=CleverTab()<CR>
+
 inoremap <expr> <Tab> CleverTab()
 
-if expand('%:e') ==? 'cpp'
-    if getfsize(expand(@%)) == '-1' || getfsize(expand(@%)) == '0'
-        let file = expand('%')
-        let file = substitute(file, 'cpp', 'h', '')
-        silent 0 put =file
-        silent normal I#include "
-        silent normal A"
-    endif
-endif
 
-if expand('%:e') ==? 'h'
-    if getfsize(expand(@%)) == '-1' || getfsize(expand(@%)) == '0'
-        " silent normal iHello
-        let file = toupper(expand('%'))
-        let file = substitute(file, '\.', "_", "")
-        silent 0 put =file
-        silent normal I#ifndef 
-        silent normal yyp
-        silent normal lcwdefine
-        silent normal jyy3pGi#endif
-        silent normal kk
-    endif
-endif
+" function! s:InsertSpace()
+    " if getline('.')[col('.')-3:col('.')-2] =~ '[^. ]\s$'
+        " return "\<bs>. "
+    " else
+        " return ' '
+    " endif
+" endfunction
+" 
+" inoremap <expr> <space> <SID>InsertSpace()
